@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: urban-infra-detection:latest
+    container_name: uid-api
+    restart: unless-stopped
+
+    ports:
+      - "${PORT:-8000}:8000"
+
+    volumes:
+      - ./models:/app/models:ro
+      - uid-artifacts:/app/artifacts
+
+    env_file:
+      - .env
+
+    environment:
+      MODEL_PATH: /app/models/model.onnx
+      TEMP_DIR: /app/artifacts/tmp
+      VIDEO_OUTPUT_DIR: /app/artifacts/video
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+
+volumes:
+  uid-artifacts:

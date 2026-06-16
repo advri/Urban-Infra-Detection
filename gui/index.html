@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Система обнаружения объектов</title>
+    <link rel="stylesheet" href="/gui/style.css" />
+</head>
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="topbar__main">
+                <h1 class="topbar__title">Система распознавания объектов городской инфраструктуры</h1>
+                <p class="topbar__subtitle">
+                    Нейросетевой анализ медиафайлов, аннотированные результаты
+                    и структурированное представление детекций в едином интерфейсе.
+                </p>
+            </div>
+
+            <div class="topbar__meta">
+                <div class="meta-card">
+                    <span class="meta-card__label">Состояние сервера</span>
+                    <div id="healthChip" class="status-chip status-chip--neutral">Проверка…</div>
+                </div>
+
+                <div class="meta-card">
+                    <span class="meta-card__label">Версия</span>
+                    <div id="appVersion" class="meta-card__value">—</div>
+                </div>
+
+                <div class="meta-card">
+                    <span class="meta-card__label">Модель</span>
+                    <div id="modelPath" class="meta-card__value">—</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="layout">
+            <section class="panel">
+                <div class="card">
+                    <h2 class="card__title">Параметры обработки</h2>
+
+                    <div class="field-group">
+                        <label class="field-label" for="modeSelect">Режим</label>
+                        <select id="modeSelect" class="field-control">
+                            <option value="image">Изображение</option>
+                            <option value="video">Видеозапись</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="fileInput">Файл</label>
+                        <input id="fileInput" class="field-control" type="file" accept="image/*" />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="sampleEveryInput">
+                            Обрабатывать каждый N-й кадр
+                        </label>
+                        <input
+                            id="sampleEveryInput"
+                            class="field-control"
+                            type="number"
+                            min="1"
+                            value="1"
+                        />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="maxFramesInput">
+                            Максимальное количество кадров
+                        </label>
+                        <input
+                            id="maxFramesInput"
+                            class="field-control"
+                            type="number"
+                            min="1"
+                            placeholder="Без ограничений"
+                        />
+                    </div>
+
+                    <div class="field-group field-group--checkbox">
+                        <label class="checkbox-row">
+                            <input id="useTrackingInput" type="checkbox" checked />
+                            <span>Применять трекинг объектов</span>
+                        </label>
+                    </div>
+
+                    <div class="action-group">
+                        <button id="analyzeButton"  class="primary-button"   type="button">
+                            Запустить анализ
+                        </button>
+                        <button id="annotateButton" class="secondary-button" type="button">
+                            Получить аннотированный результат
+                        </button>
+                        <button id="cancelButton"   class="secondary-button is-hidden" type="button">
+                            Отменить запрос
+                        </button>
+                        <button id="healthButton"   class="secondary-button" type="button">
+                            Проверить состояние сервера
+                        </button>
+                        <button id="themeButton"    class="secondary-button" type="button">
+                            Переключить цветовую схему
+                        </button>
+                        <button id="resetButton"    class="secondary-button" type="button">
+                            Сбросить состояние интерфейса
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card__title">Состояние операции</h2>
+                    <div id="stateBox" class="state-box state-box--neutral" aria-live="polite">
+                        Выберите файл и режим обработки.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card__title">Журнал операций</h2>
+                    <div id="logBox" class="log-box" aria-live="polite"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="card card--fill">
+                    <h2 class="card__title">Визуализация</h2>
+
+                    <div class="visual-grid">
+                        <div class="visual-block">
+                            <h3 class="visual-block__title">Исходный файл</h3>
+                            <div id="inputPreview" class="preview-frame">
+                                <p class="placeholder-text">
+                                    Предварительный просмотр исходного файла отобразится здесь.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="visual-block">
+                            <h3 class="visual-block__title">Аннотированный результат</h3>
+                            <div id="outputPreview" class="preview-frame">
+                                <p class="placeholder-text">
+                                    После аннотирования здесь отобразится обработанное изображение или видео.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel panel--right">
+                <div class="card">
+                    <h2 class="card__title">Сводка результатов</h2>
+                    <dl id="summaryList" class="summary-list"></dl>
+                </div>
+
+                <div class="card">
+                    <h2 class="card__title">Таблица детекций</h2>
+                    <div class="table-wrap">
+                        <table class="result-table">
+                            <thead id="resultTableHead">
+                                <tr>
+                                    <th>№</th>
+                                    <th>Класс</th>
+                                    <th>Уверенность</th>
+                                    <th>Центр</th>
+                                    <th>Размер</th>
+                                    <th>Угол, °</th>
+                                    <th>Полигон</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultTableBody">
+                                <tr>
+                                    <td class="table-empty" colspan="7">Данные отсутствуют</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card__title">Необработанный JSON-ответ</h2>
+                    <pre id="jsonBlock" class="json-block">{}</pre>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="/gui/app.js"></script>
+</body>
+</html>
